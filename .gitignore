@@ -1,0 +1,10 @@
+# Virtualenv local (446 MB de binários Qt — acima do limite do GitHub)
+.venv/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.pyc

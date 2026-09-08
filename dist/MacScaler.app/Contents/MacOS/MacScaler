@@ -1,0 +1,28 @@
+#!/bin/bash
+# Executável do MacScaler.app. Não é o app: é quem chama o app.
+#
+# `exec` mantém o mesmo PID, que é o que faz o Dock continuar mostrando o ícone
+# deste bundle em vez de um Python genérico.
+#
+# `arch -arm64` não é supersticão. O Python do Xcode é universal, e quando o
+# bundle é aberto pelo Finder o LaunchServices escolheu x86_64 para este script:
+# o Python subia sob Rosetta e o Pillow morria em
+# "incompatible architecture (have 'arm64', need 'x86_64')". Pelo terminal isso
+# nunca aparece, porque lá o shell já é nativo. O LSArchitecturePriority no
+# Info.plist diz a mesma coisa; os dois ficam, porque o custo é zero e o sintoma
+# é o app piscar no Dock e sumir sem deixar rastro na tela.
+PROJECT="/Users/joaovitorklugefarias/pin-upscaler"
+VENV="$PROJECT/.venv/bin/python"
+LOG="$HOME/Library/Logs/MacScaler.log"
+ARCH="$(uname -m)"
+
+mkdir -p "$(dirname "$LOG")"
+
+if [ ! -x "$VENV" ]; then
+  # Aberto pelo Finder não existe terminal para reclamar: usa uma caixa do sistema.
+  osascript -e 'display alert "MacScaler não encontrou o projeto" message "Esperava o ambiente em '"$VENV"'.\n\nO app é um atalho para a pasta do projeto — se ela mudou de lugar, rode build_app.py de novo lá." as critical' >/dev/null 2>&1
+  exit 1
+fi
+
+cd "$PROJECT" || exit 1
+exec arch -"$ARCH" "$VENV" -W ignore -m app >>"$LOG" 2>&1
